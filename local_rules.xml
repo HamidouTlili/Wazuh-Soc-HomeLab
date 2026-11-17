@@ -1,0 +1,30 @@
+<!-- Custom Wazuh detection rules for the SOC home lab.
+     Rule IDs 100100+ are reserved for custom rules (IDs below 100000 belong to Wazuh's default ruleset). -->
+
+<!-- Rule 100100: encoded PowerShell (T1059.001)
+     Child of 92057 (PowerShell spawned by PowerShell) and 92071 (PowerShell spawned by WMI),
+     so it also covers how Atomic Red Team launches PowerShell. -->
+<group name="local,attack,powershell">
+  <rule id="100100" level="13">
+    <if_sid>92057,92071</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)powershell\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)\s-(e|ec|ea|en|enc|enco|encode|encodeda|encodedcommand)\s+[A-Za-z0-9+/=]{20,}</field>
+    <description>Custom: encoded PowerShell command execution on endpoint (T1059.001)</description>
+    <mitre>
+      <id>T1059.001</id>
+    </mitre>
+  </rule>
+</group>
+
+<!-- Rule 100101: rpcping forcing NTLM authentication (T1003, Atomic Red Team test T1003-7) -->
+<group name="local,attack,credential_access">
+  <rule id="100101" level="10">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.image" type="pcre2">(?i)rpcping\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)-u\s+ntlm</field>
+    <description>Custom: rpcping forcing NTLM authentication (possible hash capture, T1003)</description>
+    <mitre>
+      <id>T1003</id>
+    </mitre>
+  </rule>
+</group>
